@@ -1,112 +1,117 @@
+
 # PyLadderSim
 
-**PyLadderSim** is an open-source Python package designed for simulating ladder logic in an interactive and educational environment. Ideal for learning about programmable logic controllers (PLCs), ladder diagrams, and control systems, this tool offers a visual representation of ladder logic with real-time updates.
+**PyLadderSim** is an educational Python library for simulating ladder logic in a programmable logic controller (PLC) environment. This project provides an interactive, visual ladder logic simulation that allows users to build and visualize ladder circuits, toggle component states, and observe the impact of changes in real time.
 
 ## Features
-- **Ladder Logic Visualization**: Live graphical simulation of ladder diagrams with contacts, coils, and customizable rungs.
-- **Real-Time State Updates**: Components change color based on state (`ON`/`OFF`) using a bright green (`ON`) and red (`OFF`) color scheme.
-- **Interactive GUI**: Developed using Tkinter, offering a user-friendly visualization that can be closed by pressing "Q."
-- **Extensible**: Add custom components or modify existing functionality to suit your project needs.
 
-## Getting Started
+- **Create Ladder Logic Circuits**: Add various components like contacts, coils, timers (ON-delay, OFF-delay, pulse timers), and more.
+- **Interactive Toggling**: Components are now clickable in the visualization, allowing users to toggle their states directly by clicking on them.
+- **Real-Time Visualization**: The simulation includes a live visualization of ladder logic, including color-coded status updates for each component.
+- **Educational Focus**: Designed to help students and enthusiasts learn ladder logic programming and PLC simulation in an intuitive and accessible way.
 
-### Prerequisites
-- **Python 3.7+**
-- **Tkinter** (usually included with Python)
-- **Clone the Repository**:
-  ```bash
-  git clone https://github.com/YourUsername/PyLadderSim.git
-  cd PyLadderSim
-  ```
+## Installation
 
-### Installation
-To install the dependencies:
-```bash
-pip install -r requirements.txt
-```
-(*Note*: If additional libraries are added in the future, they should be added to `requirements.txt`.)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/pyladdersim.git
+   cd pyladdersim
+   ```
+
+2. Install required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Ensure you have `customtkinter` and `Pillow` for enhanced visualizations:
+   ```bash
+   pip install customtkinter pillow
+   ```
 
 ## Usage
 
-### Setup and Run the Simulation
+1. **Setting up a Ladder Logic Simulation:**
 
-1. **Define Components**: `Contact`, `InvertedContact`, and `Output` components can be defined in your script.
-2. **Create Rungs and Add to Ladder**:
-   - Components are assembled into `Rung` objects.
-   - Each `Rung` is then added to a `Ladder` object.
+   Import `pyladdersim` components and set up a simple ladder circuit:
 
-3. **Visualize the Ladder**:
    ```python
-   from pyladdersim.components import Contact, InvertedContact, Output
-   from pyladdersim.ladder import Ladder, Rung
-   from pyladdersim.visualize_ladder import LadderVisualizer
+   from pyladdersim.components import Contact, InvertedContact, Output, OnDelayTimer
+   from pyladdersim.ladder import Rung, Ladder
+   from pyladdersim.visualizer import LadderVisualizer
 
-   def setup_ladder():
-       ladder = Ladder()
+   # Define components
+   input1 = Contact(name="Start")
+   input2 = InvertedContact(name="Stop")
+   output = Output(name="Lamp")
 
-       # Example components for the first rung
-       input1 = Contact("StartSwitch")
-       input2 = InvertedContact("StopSwitch")
-       output1 = Output("OutputLight")
+   # Create a rung and add components
+   rung1 = Rung([input1, input2, output])
 
-       # Assemble the rung and add it to the ladder
-       rung1 = Rung([input1, input2, output1])
-       ladder.add_rung(rung1)
+   # Initialize the ladder and add rungs
+   ladder = Ladder()
+   ladder.add_rung(rung1)
 
-       return ladder
-
-   if __name__ == "__main__":
-       ladder = setup_ladder()
-       visualizer = LadderVisualizer(ladder)
-       visualizer.run()
+   # Run the ladder with visualization
+   ladder.run(visualize=True)
    ```
 
-### Controls
-- **Press "Q"** to close the simulation window.
+2. **Interacting with the Simulation:**
 
-### Visualization Details
-- **Contact**: A horizontal line symbol with labels that turns green when active.
-- **Inverted Contact**: Similar to Contact, with a slash indicating its "normally closed" state.
-- **Coil (Output)**: Circle representing an output device; fills green when active.
+   - Click directly on components in the visualization to toggle their states.
+   - Observe color changes: Green indicates active (ON), and red indicates inactive (OFF).
+   - Press **Q** to stop the simulation.
 
-## Project Structure
+## Components
 
-```plaintext
-PyLadderSim/
-├── pyladdersim/
-│   ├── components.py         # Contains Contact, InvertedContact, and Output component classes
-│   ├── ladder.py             # Core ladder logic with Rung and Ladder classes
-│   ├── visualize_shapes.py   # Shape drawing utilities for each ladder component
-│   ├── visualize_ladder.py   # Main visualization setup and management
-├── tests/
-│   ├── test_ladder.py        # Basic tests for ladder logic functionality
-├── README.md                 # Project README file
-├── requirements.txt          # Python dependencies
+- **Contact**: Represents a standard normally open contact.
+- **Inverted Contact**: Represents a normally closed contact.
+- **Output Coil**: Represents an output device.
+- **Timers**: Includes ON-delay, OFF-delay, and pulse timers, each with unique timing and control logic.
+
+## Visualization
+
+The live visualization interface is built with `Tkinter` and enhanced with `customtkinter` for an interactive, seamless UI:
+- **Transparent, Clickable Components**: Each contact and coil is interactive, allowing users to click and toggle their states.
+- **Dynamic Color Coding**: Components show real-time ON/OFF status, with green for active and red for inactive.
+- **Simulation Control**: The interface updates continuously, showing the current state of each rung and overall circuit.
+
+## Example
+
+Here’s an example of a simple ladder logic with a start/stop control and a timer-based output:
+
+```python
+from pyladdersim.components import Contact, InvertedContact, Output, OnDelayTimer
+from pyladdersim.ladder import Rung, Ladder
+from pyladdersim.visualizer import LadderVisualizer
+
+# Define components
+start_button = Contact(name="Start")
+stop_button = InvertedContact(name="Stop")
+timer = OnDelayTimer(name="Delay Timer", PT=3)  # Timer with preset time
+lamp = Output(name="Lamp")
+
+# Create rungs
+rung1 = Rung([start_button, stop_button, timer])
+rung2 = Rung([timer, lamp])
+
+# Initialize ladder
+ladder = Ladder()
+ladder.add_rung(rung1)
+ladder.add_rung(rung2)
+
+# Run the ladder with visualization
+ladder.run(visualize=True)
 ```
 
 ## Contributing
-Contributions are welcome! Here’s how you can help:
 
-1. **Fork the Repository**: Click on `Fork` at the top right of the repository page.
-2. **Clone Your Forked Repo**:
-   ```bash
-   git clone https://github.com/YourUsername/PyLadderSim.git
-   ```
-3. **Create a Feature Branch**:
-   ```bash
-   git checkout -b feature-name
-   ```
-4. **Commit Your Changes**: Write clear commit messages.
-5. **Push to GitHub**:
-   ```bash
-   git push origin feature-name
-   ```
-6. **Submit a Pull Request**: Go to the original repository and create a pull request.
-
-## Roadmap
-- **Additional Components**: Adding specialized contacts, timers, and counters.
-- **Advanced Visualization**: Support for live data feeds and interactive input toggling.
-- **Export Functionality**: Export ladder diagrams to image files or PDFs.
+We welcome contributions to add new features, fix bugs, and improve documentation. To contribute, fork the repository, make your changes, and open a pull request.
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+This project is licensed under the MIT License.
+
+---
+
+Enjoy exploring ladder logic with PyLadderSim! For any questions, feel free to reach out or open an issue.
+

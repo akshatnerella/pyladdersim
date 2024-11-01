@@ -1,5 +1,3 @@
-# pyladdersim/run_ladder.py
-
 from pyladdersim.components import Contact, InvertedContact, Output, OnDelayTimer, OffDelayTimer, PulseTimer
 from pyladdersim.ladder import Ladder, Rung
 import time

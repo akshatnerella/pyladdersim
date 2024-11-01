@@ -1,13 +1,10 @@
-# pyladdersim/visualizer.py
-
 import tkinter as tk
 from pyladdersim.visualize_shapes import LadderShapes
 from pyladdersim.components import Contact, InvertedContact, Output, OnDelayTimer, OffDelayTimer, PulseTimer
-
 class LadderVisualizer:
     def __init__(self, ladder):
         self.ladder = ladder
-        self.window = tk.Tk()  # Ensure this is the only instance of Tk()
+        self.window = tk.Tk()  # Use customtkinter's main window
         self.window.title("Ladder Logic Visualization")
 
         # Canvas for drawing ladder and rungs
@@ -21,10 +18,18 @@ class LadderVisualizer:
         # Instantiate LadderShapes for drawing components
         self.shapes = LadderShapes(self.canvas)
 
+        # Store references to contact buttons for easy access
+        self.contact_buttons = {}
+
+    def toggle_contact(self, contact):
+        """Toggle the state of a contact and refresh the visualization."""
+        contact.state = not contact.state
+        self.update_visualization()
+
     def update_visualization(self):
         """Updates the ladder visualization to reflect current states."""
-        # Clear the canvas before redrawing
         self.canvas.delete("all")
+        self.contact_buttons.clear()  # Clear any previous button references
 
         # Draw the power rails
         self.canvas.create_line(50, 20, 50, 380, fill="black", width=3)
@@ -44,21 +49,26 @@ class LadderVisualizer:
             # Position components along the rung
             x_position = 100
             for component in rung.components[:-1]:
+                
+                # Overlay the component on top of the button
                 if isinstance(component, OnDelayTimer):
                     self.shapes.draw_timer(x_position, y_position, timer_type="TON", color=on_color if component.Q else off_color)
-
                 elif isinstance(component, OffDelayTimer):
                     self.shapes.draw_timer(x_position, y_position, timer_type="TOF", color=on_color if component.Q else off_color)
-
                 elif isinstance(component, PulseTimer):
                     self.shapes.draw_timer(x_position, y_position, timer_type="TP", color=on_color if component.Q else off_color)
-
                 elif isinstance(component, Contact):
                     self.shapes.draw_contact(x_position, y_position, color=on_color if component.state else off_color)
                     self.canvas.create_text(x_position, y_position - 20, text=component.name, fill=on_color if component.state else off_color)
                 elif isinstance(component, InvertedContact):
                     self.shapes.draw_inverted_contact(x_position, y_position, color=on_color if component.state else off_color)
                     self.canvas.create_text(x_position, y_position - 20, text=component.name, fill=on_color if component.state else off_color)
+                
+                if isinstance(component, Contact) or isinstance(component, InvertedContact):
+                    # Create a transparent rectangle with a click event directly on the canvas
+                    rect = self.canvas.create_rectangle(x_position - 15, y_position - 10, x_position + 15, y_position + 10,
+                                                        outline='', fill='')  # No fill or outline for full transparency
+                    self.canvas.tag_bind(rect, "<Button-1>", lambda event, comp=component: self.toggle_contact(comp))
                 x_position += 100  # Move x position for the next component
 
             # Align the output component to the right side
@@ -73,5 +83,5 @@ class LadderVisualizer:
         self.window.update()
 
     def stop(self):
-        """Closes the Tkinter window."""
+        """Close the Tkinter window."""
         self.window.destroy()
