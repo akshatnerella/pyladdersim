@@ -1,5 +1,6 @@
-# pyladdersim/components.py
 
+
+#### This is the base class for all ladder components ####
 class Component:
     """Base class for all ladder components."""
     def __init__(self, name):
@@ -49,3 +50,61 @@ class Output(Component):
         """Set the output state based on the input state."""
         self.state = input_state
         return self.state
+
+
+
+##### This is the timer class, this is a general piece of code to initiate all three types of timers #####
+class Timer:
+    """Base Timer class with shared attributes and methods for PLC timers."""
+    def __init__(self, name, delay):
+        self.name = name
+        self.PT = delay  # Preset Time in seconds
+        self.ET = 0  # Elapsed Time in seconds
+        self.Q = False  # Q (done output)
+
+    def reset(self):
+        """Resets the timer's internal state."""
+        self.ET = 0
+        self.Q = False
+
+    def evaluate(self, IN):
+        """This method should be overridden in subclasses."""
+        pass
+
+
+class OnDelayTimer(Timer):
+    """ON-Delay Timer (TON) - Activates after a delay when input turns ON."""
+    def evaluate(self, IN):
+        if IN:
+            self.ET += 1
+            if self.ET >= self.PT:
+                self.Q = True
+        else:
+            self.reset()
+        return self.Q  # Return the done output state
+
+
+class OffDelayTimer(Timer):
+    """OFF-Delay Timer (TOF) - Deactivates after a delay when input turns OFF."""
+    def evaluate(self, IN):
+        if IN:
+            self.Q = True
+            self.ET = 0  # Reset elapsed time when input is ON
+        else:
+            self.ET += 1
+            if self.ET >= self.PT:
+                self.Q = False
+        return self.Q  # Return the done output state
+
+
+class PulseTimer(Timer):
+    """Pulse Timer (TP) - Activates for a fixed duration when input turns ON."""
+    def evaluate(self, IN):
+        if IN and not self.Q:
+            self.ET = 0
+            self.Q = True
+        elif self.Q:
+            self.ET += 1
+            if self.ET >= self.PT:
+                self.Q = False
+        return self.Q  # Return the pulse output state

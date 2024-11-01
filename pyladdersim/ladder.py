@@ -1,13 +1,9 @@
 # pyladdersim/ladder.py
 
-from pyladdersim.components import Contact, Contact, Output
+from pyladdersim.components import Contact, InvertedContact, Output, OnDelayTimer, OffDelayTimer, PulseTimer
+from pyladdersim.visualizer import LadderVisualizer  # Import the visualizer
 import threading
 import time
-
-
-# pyladdersim/ladder.py
-
-# pyladdersim/ladder.py
 
 class Rung:
     """Represents a rung in the ladder logic."""
@@ -37,56 +33,70 @@ class Rung:
         result = True  # Start with True for AND logic across all components
         for component in self.components:
             if component != self.output:  # Skip the output during input evaluation
-                result = result and component.evaluate()
+                if isinstance(component, (OnDelayTimer, OffDelayTimer, PulseTimer)):
+                    result = result and component.evaluate(IN=True)  # Assume IN=True as example
+                else:
+                    result = result and component.evaluate()
         
         # Pass the final evaluated result to the output
         self.output.evaluate(result)
         return self.output.state  # Return the output's state to check
 
 
+# pyladdersim/ladder.py
+
+from pyladdersim.components import Contact, InvertedContact, Output, OnDelayTimer, OffDelayTimer, PulseTimer
+from pyladdersim.visualizer import LadderVisualizer
+import threading
+import time
+
 class Ladder:
     """The main container for ladder rungs, running in a loop."""
     def __init__(self):
         self.rungs = []
         self.running = False
-        self.rung_threads = []  # Track threads for each rung
+        self.visualizer = None
 
     def add_rung(self, rung):
         """Add a new rung to the ladder."""
         self.rungs.append(rung)
 
-    def run(self):
+    def run(self, visualize=False):
         """Run the ladder, creating threads for each rung and handling the control loop."""
         self.running = True
         print("Ladder is running. Press 'Q' to quit.")
 
-        # Start a thread for each rung
-        for rung in self.rungs:
-            rung_thread = threading.Thread(target=self.run_rung, args=(rung,))
-            rung_thread.daemon = True  # Ensures threads close when the program exits
-            rung_thread.start()
-            self.rung_threads.append(rung_thread)
+        # Initialize the visualizer only once if visualization is enabled
+        if visualize and self.visualizer is None:
+            self.visualizer = LadderVisualizer(self)
+
+        # Start a separate thread to handle the quit command
+        quit_thread = threading.Thread(target=self.wait_for_quit)
+        quit_thread.daemon = True
+        quit_thread.start()
 
         try:
-            # Main loop for displaying output and checking quit condition
+            # Main loop for evaluating rungs and visualizing output
             while self.running:
-                for idx, rung in enumerate(self.rungs):
-                    print(f"Rung {idx + 1} output: {rung.output.status()}")
+                overall_output = all(rung.evaluate() for rung in self.rungs)
+                print(f"Ladder Output: {'TRUE' if overall_output else 'FALSE'}")
+
+                # Update visualization if enabled
+                if visualize and self.visualizer:
+                    self.visualizer.update_visualization()
+
                 time.sleep(1)  # Simulate PLC scan delay
 
-                # Check for quit input
-                user_input = input("Press 'Q' to quit: ").strip().upper()
-                if user_input == 'Q':
-                    self.stop()
         except KeyboardInterrupt:
             print("\nLadder simulation interrupted.")
             self.stop()
 
-    def run_rung(self, rung):
-        """Continuously evaluate a single rung."""
+    def wait_for_quit(self):
+        """Listens for 'Q' input in a separate thread to quit the simulation."""
         while self.running:
-            rung.evaluate()
-            time.sleep(0.1)  # Simulate scan delay for each rung
+            user_input = input().strip().upper()
+            if user_input == 'Q':
+                self.stop()
 
     def stop(self):
         """Stop the ladder simulation and ensure all threads close."""

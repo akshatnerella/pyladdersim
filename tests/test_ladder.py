@@ -1,6 +1,6 @@
 # pyladdersim/run_ladder.py
 
-from pyladdersim.components import Contact, InvertedContact, Output
+from pyladdersim.components import Contact, InvertedContact, Output, OnDelayTimer, OffDelayTimer, PulseTimer
 from pyladdersim.ladder import Ladder, Rung
 import time
 from pyladdersim.visualizer import LadderVisualizer
@@ -20,7 +20,7 @@ def setup_ladder():
     ladder.add_rung(rung1)
 
     # Define components for a second rung (optional example)
-    input3 = Contact("OverrideSwitch")
+    input3 = OnDelayTimer("Timer1", delay=5)
     output2 = Output("WarningLight")
     rung2 = Rung([input3, output2])
     ladder.add_rung(rung2)
@@ -30,7 +30,5 @@ def setup_ladder():
 # Start the ladder simulation
 if __name__ == "__main__":
     ladder, input1, input2 = setup_ladder()
-    visualizer = LadderVisualizer(ladder)
     # Run the ladder
-    ladder.run()  # Runs in main thread; user-friendly and simple
-    visualizer.run()  # Runs in separate thread; visualizes ladder components
+    ladder.run(visualize=True)  # Runs in main thread; user-friendly and simple # Runs in separate thread; visualizes ladder components
