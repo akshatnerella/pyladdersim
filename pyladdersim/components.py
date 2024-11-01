@@ -15,7 +15,7 @@ class Component:
         return "TRUE" if self.state else "FALSE"
 
 
-class OpenContact(Component):
+class Contact(Component):
     """An open contact that passes the signal if activated."""
     def __init__(self, name):
         super().__init__(name)
@@ -27,7 +27,7 @@ class OpenContact(Component):
         self.state = False
 
 
-class ClosedContact(Component):
+class InvertedContact(Component):
     """A closed contact that blocks the signal if deactivated."""
     def __init__(self, name):
         super().__init__(name)

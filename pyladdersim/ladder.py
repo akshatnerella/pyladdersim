@@ -1,6 +1,6 @@
 # pyladdersim/ladder.py
 
-from pyladdersim.components import OpenContact, ClosedContact, Output
+from pyladdersim.components import Contact, Contact, Output
 import threading
 import time
 
