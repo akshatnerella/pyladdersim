@@ -23,11 +23,6 @@
    pip install -r requirements.txt
    ```
 
-3. Ensure you have `customtkinter` and `Pillow` for enhanced visualizations:
-   ```bash
-   pip install customtkinter pillow
-   ```
-
 ## Usage
 
 1. **Setting up a Ladder Logic Simulation:**
@@ -70,7 +65,7 @@
 
 ## Visualization
 
-The live visualization interface is built with `Tkinter` and enhanced with `customtkinter` for an interactive, seamless UI:
+The live visualization interface is built with `Tkinter` for an interactive, seamless UI:
 - **Transparent, Clickable Components**: Each contact and coil is interactive, allowing users to click and toggle their states.
 - **Dynamic Color Coding**: Components show real-time ON/OFF status, with green for active and red for inactive.
 - **Simulation Control**: The interface updates continuously, showing the current state of each rung and overall circuit.
