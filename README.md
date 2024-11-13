@@ -14,7 +14,7 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/pyladdersim.git
+   git clone https://github.com/akshatnerella/pyladdersim.git
    cd pyladdersim
    ```
 
