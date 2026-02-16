@@ -52,3 +52,16 @@ def test_timer_update_alias_matches_evaluate():
 
     assert timer.update(True) is False
     assert timer.update(True) is True
+
+
+def test_timer_state_property_stays_synced_with_q():
+    timer = PulseTimer(name="TP", delay=1)
+    assert timer.state is False
+    assert timer.Q is False
+
+    timer.state = True
+    assert timer.Q is True
+    assert timer.state is True
+
+    timer.state = False
+    assert timer.Q is False
