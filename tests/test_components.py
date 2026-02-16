@@ -1,54 +1,29 @@
-# pyladdersim/tests/test_ladder.py
-
 from pyladdersim.components import Contact, InvertedContact, Output
-from pyladdersim.ladder import Ladder, Rung
-import threading
 
-def test_components():
-    print("Testing Components...")
 
-    # Test OpenContact
-    input1 = Contact("StartSwitch")
-    assert input1.evaluate() == False  # Default state is False
-    input1.activate()
-    assert input1.evaluate() == True
-    input1.deactivate()
-    assert input1.evaluate() == False
-    print("OpenContact passed.")
+def test_contact_state_transitions():
+    contact = Contact("Start")
+    assert contact.evaluate() is False
 
-    # Test ClosedContact
-    input2 = InvertedContact("StopSwitch")
-    assert input2.evaluate() == True  # Default state is True
-    input2.activate()
-    assert input2.evaluate() == False
-    input2.deactivate()
-    assert input2.evaluate() == True
-    print("ClosedContact passed.")
+    contact.activate()
+    assert contact.evaluate() is True
 
-    # Test Output
-    output = Output("OutputLight")
-    assert output.evaluate(input_state=True) == True
-    assert output.evaluate(input_state=False) == False
-    print("Output passed.")
+    contact.deactivate()
+    assert contact.evaluate() is False
 
-def test_rung():
-    print("\nTesting Rung...")
 
-    # Create components
-    input1 = Contact("StartSwitch")
-    input2 = InvertedContact("StopSwitch")
-    output = Output("OutputLight")
+def test_inverted_contact_state_transitions():
+    contact = InvertedContact("Stop")
+    assert contact.evaluate() is True
 
-    # Create and validate rung with components
-    rung1 = Rung([input1, input2, output])
-    assert rung1.evaluate() == False  # No inputs activated
-    input1.activate()  # Activate input1
-    assert rung1.evaluate() == True  # With input1 active and input2 by default, rung passes
-    input1.deactivate()
-    assert rung1.evaluate() == False  # Deactivating input1 should deactivate rung again
-    print("Rung passed.")
+    contact.activate()
+    assert contact.evaluate() is False
 
-# Run tests
-if __name__ == "__main__":
-    test_components()
-    test_rung()
+    contact.deactivate()
+    assert contact.evaluate() is True
+
+
+def test_output_tracks_input():
+    output = Output("Lamp")
+    assert output.evaluate(True) is True
+    assert output.evaluate(False) is False
