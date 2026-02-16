@@ -37,7 +37,10 @@ class Rung:
             if isinstance(component, FunctionBlock):
                 result = component.evaluate(IN=result)
             else:
-                result = result and component.evaluate()
+                # Evaluate every scan to keep stateful contacts in sync,
+                # then apply ladder power-flow (AND) semantics.
+                component_result = component.evaluate()
+                result = result and component_result
 
         self.output.evaluate(result)
         return self.output.state
