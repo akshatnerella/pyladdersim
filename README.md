@@ -124,6 +124,7 @@ One-time setup required:
    - `release:minor`
    - `release:patch`
 4. If no release label is present, the workflow automatically adds `release:patch` and bumps patch version.
+5. Automatic version bump commits run for same-repository PR branches; fork PRs require a maintainer to apply/version-bump after merge.
 
 If the version already exists on PyPI, publish is skipped safely.
 
