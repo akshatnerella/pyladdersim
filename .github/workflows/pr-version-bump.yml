@@ -68,17 +68,17 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
 
-      - name: Fetch base branch and tags
+      - name: Fetch base branch
         run: |
           git fetch origin "${{ github.event.pull_request.base.ref }}"
-          git fetch --tags
 
       - name: Bump setup.py version
         id: bump
         run: |
           python .github/scripts/pr_bump_version.py \
             --bump "${{ steps.label.outputs.bump }}" \
-            --base-ref "${{ github.event.pull_request.base.ref }}"
+            --base-ref "${{ github.event.pull_request.base.ref }}" \
+            --base-remote "origin"
 
       - name: Commit and push version update
         if: steps.bump.outputs.changed == 'true'

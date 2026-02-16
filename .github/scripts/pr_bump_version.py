@@ -24,16 +24,8 @@ def parse_setup_version(text: str) -> str:
     return match.group(1)
 
 
-def latest_tag_version() -> str | None:
-    tags = run("git", "tag", "--list", "v*", "--sort=-v:refname").splitlines()
-    for tag in tags:
-        if re.fullmatch(r"v\d+\.\d+\.\d+", tag):
-            return tag[1:]
-    return None
-
-
-def base_branch_version(base_ref: str) -> str:
-    setup_on_base = run("git", "show", f"origin/{base_ref}:setup.py")
+def base_branch_version(base_remote: str, base_ref: str) -> str:
+    setup_on_base = run("git", "show", f"{base_remote}/{base_ref}:setup.py")
     return parse_setup_version(setup_on_base)
 
 
@@ -67,11 +59,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bump", choices=["major", "minor", "patch"], required=True)
     parser.add_argument("--base-ref", required=True)
+    parser.add_argument("--base-remote", default="origin")
     args = parser.parse_args()
 
     setup_text = Path("setup.py").read_text(encoding="utf-8")
     current_version = parse_setup_version(setup_text)
-    base_version = latest_tag_version() or base_branch_version(args.base_ref)
+    base_version = base_branch_version(args.base_remote, args.base_ref)
     target_version = bump_version(base_version, args.bump)
 
     changed = update_setup(target_version)
