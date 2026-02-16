@@ -1,7 +1,7 @@
 name: PR Version Bump
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - reopened
@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   bump-version:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     steps:
@@ -60,16 +61,6 @@ jobs:
             }
             core.setOutput("bump", bump);
 
-      - name: Determine if PR branch is pushable
-        id: pushable
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-            const sameRepo = pr.head.repo.full_name === `${context.repo.owner}/${context.repo.repo}`;
-            const canPush = sameRepo || pr.maintainer_can_modify === true;
-            core.setOutput("can_push", canPush ? "true" : "false");
-
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
@@ -78,23 +69,19 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch base branch
-        if: steps.pushable.outputs.can_push == 'true'
         run: |
-          git remote remove upstream || true
-          git remote add upstream "https://github.com/${{ github.repository }}.git"
-          git fetch upstream "${{ github.event.pull_request.base.ref }}"
+          git fetch origin "${{ github.event.pull_request.base.ref }}"
 
       - name: Bump setup.py version
-        if: steps.pushable.outputs.can_push == 'true'
         id: bump
         run: |
           python .github/scripts/pr_bump_version.py \
             --bump "${{ steps.label.outputs.bump }}" \
             --base-ref "${{ github.event.pull_request.base.ref }}" \
-            --base-remote "upstream"
+            --base-remote "origin"
 
       - name: Commit and push version update
-        if: steps.pushable.outputs.can_push == 'true' && steps.bump.outputs.changed == 'true'
+        if: steps.bump.outputs.changed == 'true'
         env:
           NEW_VERSION: ${{ steps.bump.outputs.version }}
         run: |
@@ -103,8 +90,3 @@ jobs:
           git add setup.py
           git commit -m "chore: bump version to ${NEW_VERSION}"
           git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
-
-      - name: Skip note for non-pushable PR
-        if: steps.pushable.outputs.can_push != 'true'
-        run: |
-          echo "Skipping automatic version commit because this PR branch is not pushable by maintainers."
