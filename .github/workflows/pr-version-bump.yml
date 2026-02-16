@@ -70,16 +70,7 @@ jobs:
             const canPush = sameRepo || pr.maintainer_can_modify === true;
             core.setOutput("can_push", canPush ? "true" : "false");
 
-      - name: Checkout base branch (trusted workflow files)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Copy trusted bump script
-        run: cp .github/scripts/pr_bump_version.py /tmp/pr_bump_version.py
-
       - name: Checkout PR branch
-        if: steps.pushable.outputs.can_push == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
@@ -89,6 +80,7 @@ jobs:
       - name: Fetch base branch
         if: steps.pushable.outputs.can_push == 'true'
         run: |
+          git remote remove upstream || true
           git remote add upstream "https://github.com/${{ github.repository }}.git"
           git fetch upstream "${{ github.event.pull_request.base.ref }}"
 
@@ -96,7 +88,7 @@ jobs:
         if: steps.pushable.outputs.can_push == 'true'
         id: bump
         run: |
-          python /tmp/pr_bump_version.py \
+          python .github/scripts/pr_bump_version.py \
             --bump "${{ steps.label.outputs.bump }}" \
             --base-ref "${{ github.event.pull_request.base.ref }}" \
             --base-remote "upstream"
