@@ -1,7 +1,7 @@
 import threading
 import time
 
-from pyladdersim.components import OffDelayTimer, OnDelayTimer, Output, PulseTimer
+from pyladdersim.components import FunctionBlock, Output
 
 
 class Rung:
@@ -34,7 +34,7 @@ class Rung:
         for component in self.components:
             if component is self.output:
                 continue
-            if isinstance(component, (OnDelayTimer, OffDelayTimer, PulseTimer)):
+            if isinstance(component, FunctionBlock):
                 result = component.evaluate(IN=result)
             else:
                 result = result and component.evaluate()
@@ -55,8 +55,24 @@ class Ladder:
         """Add a new rung to the ladder."""
         self.rungs.append(rung)
 
-    def run(self, visualize=False):
+    def scan_once(self, visualize=False):
+        """Execute one PLC scan cycle and return the ladder output."""
+        overall_output = all(rung.evaluate() for rung in self.rungs)
+
+        if visualize:
+            if self.visualizer is None:
+                from pyladdersim.visualizer import LadderVisualizer
+
+                self.visualizer = LadderVisualizer(self)
+            self.visualizer.update_visualization()
+
+        return overall_output
+
+    def run(self, visualize=False, cycle_time=1.0):
         """Run the ladder continuously until stopped."""
+        if cycle_time <= 0:
+            raise ValueError("cycle_time must be > 0.")
+
         self.running = True
         print("Ladder is running. Press 'Q' to quit.")
 
@@ -71,13 +87,9 @@ class Ladder:
 
         try:
             while self.running:
-                overall_output = all(rung.evaluate() for rung in self.rungs)
+                overall_output = self.scan_once(visualize=visualize)
                 print(f"Ladder Output: {'TRUE' if overall_output else 'FALSE'}")
-
-                if visualize and self.visualizer:
-                    self.visualizer.update_visualization()
-
-                time.sleep(1)
+                time.sleep(cycle_time)
         except KeyboardInterrupt:
             print("\nLadder simulation interrupted.")
             self.stop()

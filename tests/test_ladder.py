@@ -1,7 +1,7 @@
 import pytest
 
 from pyladdersim.components import Contact, InvertedContact, Output
-from pyladdersim.ladder import Rung
+from pyladdersim.ladder import Ladder, Rung
 
 
 def test_rung_evaluates_series_logic():
@@ -34,3 +34,10 @@ def test_rung_requires_output_component():
 
     with pytest.raises(ValueError, match="must have an output"):
         Rung([start, stop])
+
+
+def test_ladder_run_requires_positive_cycle_time():
+    ladder = Ladder()
+
+    with pytest.raises(ValueError, match="cycle_time"):
+        ladder.run(cycle_time=0)
