@@ -102,6 +102,23 @@ ladder.run(visualize=True)
 
 We welcome contributions to add new features, fix bugs, and improve documentation. To contribute, fork the repository, make your changes, and open a pull request.
 
+## CI/CD (Auto Publish to PyPI)
+
+This repository is configured with GitHub Actions:
+- `CI`: runs tests on pull requests and pushes to `main`.
+- `Auto Version Release`: on each merge/push to `main`, it auto-bumps version in `setup.py`, creates a git tag (for example `v0.1.1`), and pushes it.
+- `Publish to PyPI`: builds and uploads the package when a release tag is pushed.
+
+One-time setup required:
+1. Create a PyPI API token (`__token__`) for your PyPI project.
+2. In GitHub: `Settings -> Secrets and variables -> Actions`, add a repository secret named `PYPI_API_TOKEN`.
+3. Use conventional commit messages in merged commits/PR titles for semantic bumps:
+   - `feat:` -> minor bump
+   - `fix:` (or anything else) -> patch bump
+   - `BREAKING CHANGE` or `feat!:` / `fix!:` -> major bump
+
+If the version already exists on PyPI, publish is skipped safely.
+
 ## License
 
 This project is licensed under the MIT License.

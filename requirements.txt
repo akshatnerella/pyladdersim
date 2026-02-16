@@ -1,4 +1,1 @@
 matplotlib
-threading
-time
-os

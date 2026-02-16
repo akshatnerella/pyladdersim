@@ -1,20 +1,24 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='ladder_sim',
-    version='0.1',
-    packages=find_packages(),
+    name='pyladdersim',
+    version='0.1.0',
+    packages=find_packages(exclude=["tests", "tests.*"]),
     install_requires=[
         'matplotlib',
     ],
     license='MIT',
     classifiers=[
-        'Development Status :: Alpha',
-        'Intended Audience :: Education, Learning',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.7',
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Education',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ],
+    python_requires='>=3.10',
     description='A Python-based ladder logic simulation library with visualization tools',
     author='Akshat Nerella',
-    author_email='akshatnerella27@gmail.com'
+    author_email='akshatnerella27@gmail.com',
+    url='https://github.com/akshatnerella/pyladdersim',
 )

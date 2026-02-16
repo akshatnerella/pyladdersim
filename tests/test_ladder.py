@@ -1,32 +1,36 @@
-from pyladdersim.components import Contact, InvertedContact, Output, OnDelayTimer, OffDelayTimer, PulseTimer
-from pyladdersim.ladder import Ladder, Rung
-import time
-from pyladdersim.visualizer import LadderVisualizer
+import pytest
 
-def setup_ladder():
-    # Initialize Ladder
-    ladder = Ladder()
+from pyladdersim.components import Contact, InvertedContact, Output
+from pyladdersim.ladder import Rung
 
-    # Define components for the first rung
-    input1 = Contact("StartSwitch")
-    #input1.activate()  # Activate input1 for testing
-    input2 = InvertedContact("StopSwitch")
-    output1 = Output("OutputLight1")
 
-    # Create the first rung and add it to the ladder
-    rung1 = Rung([input1, input2, output1])
-    ladder.add_rung(rung1)
+def test_rung_evaluates_series_logic():
+    start = Contact("Start")
+    stop = InvertedContact("Stop")
+    lamp = Output("Lamp")
+    rung = Rung([start, stop, lamp])
 
-    # Define components for a second rung (optional example)
-    input3 = OnDelayTimer("Timer1", delay=5)
-    output2 = Output("WarningLight")
-    rung2 = Rung([input3, output2])
-    ladder.add_rung(rung2)
+    assert rung.evaluate() is False
 
-    return ladder, input1, input2  # Return ladder and inputs for control
+    start.activate()
+    assert rung.evaluate() is True
 
-# Start the ladder simulation
-if __name__ == "__main__":
-    ladder, input1, input2 = setup_ladder()
-    # Run the ladder
-    ladder.run(visualize=True)  # Runs in main thread; user-friendly and simple # Runs in separate thread; visualizes ladder components
+    stop.activate()
+    assert rung.evaluate() is False
+
+
+def test_rung_requires_single_output():
+    start = Contact("Start")
+    lamp_1 = Output("Lamp1")
+    lamp_2 = Output("Lamp2")
+
+    with pytest.raises(ValueError, match="only one output"):
+        Rung([start, lamp_1, lamp_2])
+
+
+def test_rung_requires_output_component():
+    start = Contact("Start")
+    stop = InvertedContact("Stop")
+
+    with pytest.raises(ValueError, match="must have an output"):
+        Rung([start, stop])

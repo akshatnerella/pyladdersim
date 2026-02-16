@@ -1,22 +1,54 @@
-# Test script for PLC timers
+from pyladdersim.components import OffDelayTimer, OnDelayTimer, PulseTimer
 
-import time
-from pyladdersim.components import OnDelayTimer, OffDelayTimer, PulseTimer
 
-# Initialize timers
-ton = OnDelayTimer(name="TON", delay=5)
-tof = OffDelayTimer(name="TOF", delay=5)
-tp = PulseTimer(name="TP", delay=3)
+def test_on_delay_timer_turns_on_after_preset():
+    timer = OnDelayTimer(name="TON", delay=3)
 
-# Simulate each timer in action
-for i in range(10):
-    print(f"Time: {i}")
-    ton.update(i >= 2)  # TON input ON at t=2
-    tof.update(i < 5)   # TOF input OFF at t=5
-    tp.update(i == 2)   # TP input pulse at t=2
+    assert timer.evaluate(False) is False
+    assert timer.evaluate(True) is False
+    assert timer.evaluate(True) is False
+    assert timer.evaluate(True) is True
+    assert timer.state is True
 
-    print(f"  ON-Delay Timer (TON) state: {'ON' if ton.state else 'OFF'}")
-    print(f"  OFF-Delay Timer (TOF) state: {'ON' if tof.state else 'OFF'}")
-    print(f"  Pulse Timer (TP) state: {'ON' if tp.state else 'OFF'}\n")
+    assert timer.evaluate(False) is False
+    assert timer.ET == 0
+    assert timer.state is False
 
-    time.sleep(1)
+
+def test_off_delay_timer_turns_off_after_preset():
+    timer = OffDelayTimer(name="TOF", delay=2)
+
+    assert timer.evaluate(True) is True
+    assert timer.state is True
+    assert timer.ET == 0
+
+    assert timer.evaluate(False) is True
+    assert timer.ET == 1
+    assert timer.evaluate(False) is False
+    assert timer.ET == 2
+
+    assert timer.evaluate(True) is True
+    assert timer.ET == 0
+
+
+def test_pulse_timer_holds_true_for_preset_duration():
+    timer = PulseTimer(name="TP", delay=3)
+
+    assert timer.evaluate(True) is True
+    assert timer.ET == 0
+    assert timer.state is True
+
+    assert timer.evaluate(False) is True
+    assert timer.ET == 1
+    assert timer.evaluate(False) is True
+    assert timer.ET == 2
+    assert timer.evaluate(False) is False
+    assert timer.ET == 3
+    assert timer.state is False
+
+
+def test_timer_update_alias_matches_evaluate():
+    timer = OnDelayTimer(name="TON", delay=2)
+
+    assert timer.update(True) is False
+    assert timer.update(True) is True

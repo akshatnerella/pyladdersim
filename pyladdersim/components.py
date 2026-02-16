@@ -62,10 +62,19 @@ class Timer:
         self.ET = 0  # Elapsed Time in seconds
         self.Q = False  # Q (done output)
 
+    @property
+    def state(self):
+        """Compatibility alias used by existing examples/tests."""
+        return self.Q
+
     def reset(self):
         """Resets the timer's internal state."""
         self.ET = 0
         self.Q = False
+
+    def update(self, IN):
+        """Compatibility alias that mirrors evaluate(IN)."""
+        return self.evaluate(IN)
 
     def evaluate(self, IN):
         """This method should be overridden in subclasses."""
