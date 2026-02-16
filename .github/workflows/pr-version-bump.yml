@@ -1,0 +1,118 @@
+name: PR Version Bump
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine bump label
+        id: label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            let bump = "patch";
+            if (labels.includes("release:major")) {
+              bump = "major";
+            } else if (labels.includes("release:minor")) {
+              bump = "minor";
+            } else if (labels.includes("release:patch")) {
+              bump = "patch";
+            } else {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  labels: ["release:patch"]
+                });
+              } catch (error) {
+                if (error.status !== 422) {
+                  throw error;
+                }
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: "release:patch",
+                  color: "0e8a16",
+                  description: "Patch version bump"
+                });
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  labels: ["release:patch"]
+                });
+              }
+            }
+            core.setOutput("bump", bump);
+
+      - name: Determine if PR branch is pushable
+        id: pushable
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const sameRepo = pr.head.repo.full_name === `${context.repo.owner}/${context.repo.repo}`;
+            const canPush = sameRepo || pr.maintainer_can_modify === true;
+            core.setOutput("can_push", canPush ? "true" : "false");
+
+      - name: Checkout base branch (trusted workflow files)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Copy trusted bump script
+        run: cp .github/scripts/pr_bump_version.py /tmp/pr_bump_version.py
+
+      - name: Checkout PR branch
+        if: steps.pushable.outputs.can_push == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        if: steps.pushable.outputs.can_push == 'true'
+        run: |
+          git remote add upstream "https://github.com/${{ github.repository }}.git"
+          git fetch upstream "${{ github.event.pull_request.base.ref }}"
+
+      - name: Bump setup.py version
+        if: steps.pushable.outputs.can_push == 'true'
+        id: bump
+        run: |
+          python /tmp/pr_bump_version.py \
+            --bump "${{ steps.label.outputs.bump }}" \
+            --base-ref "${{ github.event.pull_request.base.ref }}" \
+            --base-remote "upstream"
+
+      - name: Commit and push version update
+        if: steps.pushable.outputs.can_push == 'true' && steps.bump.outputs.changed == 'true'
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add setup.py
+          git commit -m "chore: bump version to ${NEW_VERSION}"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+      - name: Skip note for non-pushable PR
+        if: steps.pushable.outputs.can_push != 'true'
+        run: |
+          echo "Skipping automatic version commit because this PR branch is not pushable by maintainers."
